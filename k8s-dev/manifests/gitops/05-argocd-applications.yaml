@@ -1,0 +1,192 @@
+# ArgoCD Application for XploreSG Frontend
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: exploresg-frontend
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: exploresg
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/your-org/exploresg
+    targetRevision: HEAD
+    path: k8s-dev/manifests/apps/frontend
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: exploresg
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  revisionHistoryLimit: 10
+
+---
+# ArgoCD Application for XploreSG Backend
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: exploresg-backend
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: exploresg
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/your-org/exploresg
+    targetRevision: HEAD
+    path: k8s-dev/manifests/apps/backend
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: exploresg
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  revisionHistoryLimit: 10
+
+---
+# ArgoCD Application for XploreSG Database
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: exploresg-database
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: exploresg
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/your-org/exploresg
+    targetRevision: HEAD
+    path: k8s-dev/manifests/apps/database
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: exploresg
+  syncPolicy:
+    automated:
+      prune: false # Don't auto-prune database for safety
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 5m
+  revisionHistoryLimit: 5
+
+---
+# ArgoCD Application of Applications (App of Apps pattern)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: exploresg-platform
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: exploresg
+    app.kubernetes.io/component: platform
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/your-org/exploresg
+    targetRevision: HEAD
+    path: k8s-dev/manifests/platform
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  revisionHistoryLimit: 10
+
+---
+# ArgoCD Project for XploreSG
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: exploresg
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: exploresg
+spec:
+  description: XploreSG Tourism Platform Project
+
+  # Source repositories
+  sourceRepos:
+    - "https://github.com/your-org/exploresg"
+    - "https://charts.bitnami.com/bitnami"
+    - "https://prometheus-community.github.io/helm-charts"
+
+  # Destinations
+  destinations:
+    - namespace: exploresg
+      server: https://kubernetes.default.svc
+    - namespace: exploresg-*
+      server: https://kubernetes.default.svc
+    - namespace: monitoring
+      server: https://kubernetes.default.svc
+
+  # Cluster resource whitelist
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+
+  # Namespace resource blacklist (deny these resources)
+  namespaceResourceBlacklist:
+    - group: ""
+      kind: ResourceQuota
+    - group: ""
+      kind: LimitRange
+
+  # Roles for the project
+  roles:
+    - name: developer
+      description: Developer access to XploreSG applications
+      policies:
+        - p, proj:exploresg:developer, applications, get, exploresg/*, allow
+        - p, proj:exploresg:developer, applications, sync, exploresg/*, allow
+        - p, proj:exploresg:developer, applications, action/*, exploresg/*, allow
+        - p, proj:exploresg:developer, applications, override, exploresg/*, allow
+        - p, proj:exploresg:developer, logs, get, exploresg/*, allow
+      groups:
+        - exploresg-developers
+
+    - name: admin
+      description: Admin access to XploreSG applications
+      policies:
+        - p, proj:exploresg:admin, applications, *, exploresg/*, allow
+        - p, proj:exploresg:admin, repositories, *, exploresg/*, allow
+        - p, proj:exploresg:admin, clusters, *, exploresg/*, allow
+      groups:
+        - exploresg-admins

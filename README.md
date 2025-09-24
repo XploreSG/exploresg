@@ -32,16 +32,20 @@ This capstone project demonstrates mastery of **Software Engineering Principles*
 
 ### Microservices Architecture
 
-| Service             | Purpose                            | Technology          |
-| ------------------- | ---------------------------------- | ------------------- |
-| **Rental Service**  | Vehicle booking & fleet management | Node.js, PostgreSQL |
-| **Route Explorer**  | Map overlays & curated routes      | React, MongoDB      |
-| **Calendar Sync**   | OAuth2 & event integration         | Python, Redis       |
-| **Weather Service** | Forecasts & suitability alerts     | Go, External APIs   |
-| **Journaling**      | Note-taking & sentiment analysis   | Node.js, MongoDB    |
-| **AI Assistant**    | Gemini-powered summaries           | Python, Gemini API  |
-| **Gamification**    | Medals & achievements              | Node.js, Redis      |
-| **Dashboard**       | Unified UI & orchestration         | React, GraphQL      |
+| Service                  | Purpose                            | Technology          |
+| ------------------------ | ---------------------------------- | ------------------- |
+| **User Service**         | Customer profiles & authentication | Node.js, PostgreSQL |
+| **Payment Service**      | Secure payments & billing          | Node.js, PostgreSQL |
+| **Rental Service**       | Vehicle booking & fleet management | Node.js, PostgreSQL |
+| **Inventory Service**    | Fleet tracking & equipment add-ons | Node.js, PostgreSQL |
+| **Notification Service** | Alerts, confirmations & messaging  | Node.js, Redis      |
+| **Route Explorer**       | Map overlays & curated routes      | React, MongoDB      |
+| **Calendar Sync**        | OAuth2 & event integration         | Python, Redis       |
+| **Weather Service**      | Forecasts & suitability alerts     | Go, External APIs   |
+| **Journaling**           | Note-taking & sentiment analysis   | Node.js, MongoDB    |
+| **AI Assistant**         | Gemini-powered summaries           | Python, Gemini API  |
+| **Gamification**         | Medals & achievements              | Node.js, Redis      |
+| **Dashboard**            | Unified UI & orchestration         | React, GraphQL      |
 
 ### Polyglot Persistence
 
@@ -75,14 +79,17 @@ This will automatically clone all project repositories to the parent directory:
 project-exploresg/
 ├── exploresg/                    # This bootstrap repo
 ├── exploresg-frontend-service/   # React frontend
-├── exploresg-user-service/       # User management
-├── exploresg-rental-service/     # Vehicle rentals
-├── exploresg-route-service/      # Route exploration
-├── exploresg-calendar-service/   # Calendar integration
-├── exploresg-weather-service/    # Weather forecasts
-├── exploresg-journal-service/    # Journaling & AI
+├── exploresg-user-service/       # Customer profiles & authentication
+├── exploresg-payment-service/    # Secure payments & billing
+├── exploresg-rental-service/     # Vehicle booking & fleet management
+├── exploresg-inventory-service/  # Fleet tracking & equipment add-ons
+├── exploresg-notification-service/ # Alerts, confirmations & messaging
+├── exploresg-route-service/      # Route exploration & map overlays
+├── exploresg-calendar-service/   # Calendar integration & OAuth2
+├── exploresg-weather-service/    # Weather forecasts & alerts
+├── exploresg-journal-service/    # Journaling & AI summaries
 ├── exploresg-gamification-service/ # Medals & achievements
-└── exploresg-api-gateway/        # API orchestration
+└── exploresg-api-gateway/        # API orchestration & routing
 ```
 
 ### 2. Local Development Setup

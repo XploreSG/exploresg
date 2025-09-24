@@ -22,8 +22,13 @@ Welcome to the comprehensive documentation for XploreSG - a Singapore exploratio
 - [Development Environment](development/setup.md)
 - [Docker Compose Development](development/docker-development.md)
 - [Kubernetes Development](development/kubernetes-development.md)
-- [Coding Standards](development/coding-standards.md)
-- [Git Workflow](development/git-workflow.md)
+
+### 🎯 Best Practices & Standards
+
+- [Coding Standards](development/coding-standards.md) - Comprehensive coding standards and quality guidelines
+- [Git Workflow](development/git-workflow.md) - Professional Git workflow and collaboration practices
+- [Development Tools](development/development-tools.md) - Essential development tools and environment setup
+- [Security & Performance](development/security-performance.md) - Security best practices and performance optimization
 
 ### 📚 API Documentation
 
@@ -142,12 +147,25 @@ exploresg/
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our contributing guidelines:
+We welcome contributions! Please follow our comprehensive guidelines that demonstrate academic proficiency and professional standards:
 
-1. **Development Setup**: Follow the [development setup guide](development/setup.md)
-2. **Coding Standards**: Adhere to our [coding standards](development/coding-standards.md)
-3. **Git Workflow**: Use our [git workflow](development/git-workflow.md)
-4. **Testing**: Ensure all tests pass before submitting
+### 📋 Prerequisites
+
+1. **Development Setup**: Configure your environment using [development tools guide](development/development-tools.md)
+2. **Environment**: Follow the [development setup guide](development/setup.md)
+
+### 🎯 Standards & Practices
+
+3. **Coding Standards**: Adhere to our [comprehensive coding standards](development/coding-standards.md)
+4. **Git Workflow**: Follow our [professional git workflow](development/git-workflow.md)
+5. **Security & Performance**: Apply [security and performance best practices](development/security-performance.md)
+
+### ✅ Quality Gates
+
+6. **Code Quality**: Maintain >90% test coverage and pass all linting
+7. **Security**: Pass security scans and vulnerability checks
+8. **Documentation**: Update relevant documentation for all changes
+9. **Testing**: Ensure all unit, integration, and E2E tests pass
 
 ---
 

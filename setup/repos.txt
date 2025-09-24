@@ -1,6 +1,21 @@
 # Project Repository Configuration
 # Add repository URLs here, one per line using SSH format
 # Lines starting with # are comments and will be ignored
-# Add your project repositories below (use SSH format):
+# 
+# Core Rental Platform Services (Real-world rental company architecture)
 git@github.com:XploreSG/exploresg-frontend-service.git
 git@github.com:XploreSG/exploresg-user-service.git
+git@github.com:XploreSG/exploresg-payment-service.git
+git@github.com:XploreSG/exploresg-rental-service.git
+git@github.com:XploreSG/exploresg-inventory-service.git
+git@github.com:XploreSG/exploresg-notification-service.git
+#
+# Travel & Experience Services
+git@github.com:XploreSG/exploresg-route-service.git
+git@github.com:XploreSG/exploresg-calendar-service.git
+git@github.com:XploreSG/exploresg-weather-service.git
+git@github.com:XploreSG/exploresg-journal-service.git
+git@github.com:XploreSG/exploresg-gamification-service.git
+#
+# Infrastructure Services
+git@github.com:XploreSG/exploresg-api-gateway.git
