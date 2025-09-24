@@ -1,0 +1,6 @@
+# Project Repository Configuration
+# Add repository URLs here, one per line using SSH format
+# Lines starting with # are comments and will be ignored
+# Add your project repositories below (use SSH format):
+git@github.com:XploreSG/exploresg-frontend-service.git
+git@github.com:XploreSG/exploresg-user-service.git
