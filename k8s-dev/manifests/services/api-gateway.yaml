@@ -1,0 +1,73 @@
+# API Gateway Service (COMMENTED OUT - Optional for development)
+# Central API gateway for routing and load balancing
+
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: api-gateway
+#   namespace: xploresg-dev
+#   labels:
+#     app.kubernetes.io/name: api-gateway
+#     app.kubernetes.io/component: gateway
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app.kubernetes.io/name: api-gateway
+#   template:
+#     metadata:
+#       labels:
+#         app.kubernetes.io/name: api-gateway
+#         app.kubernetes.io/component: gateway
+#     spec:
+#       containers:
+#       - name: api-gateway
+#         image: xploresg/api-gateway:latest
+#         imagePullPolicy: Always
+#         ports:
+#         - containerPort: 8080
+#           name: http
+#         env:
+#         - name: USER_SERVICE_URL
+#           value: "http://user-service:3001"
+#         - name: FRONTEND_SERVICE_URL
+#           value: "http://frontend-service:80"
+#         # Health checks
+#         livenessProbe:
+#           httpGet:
+#             path: /health
+#             port: 8080
+#           initialDelaySeconds: 30
+#           timeoutSeconds: 5
+#         readinessProbe:
+#           httpGet:
+#             path: /ready
+#             port: 8080
+#           initialDelaySeconds: 10
+#           timeoutSeconds: 5
+#         resources:
+#           requests:
+#             memory: "256Mi"
+#             cpu: "200m"
+#           limits:
+#             memory: "512Mi"
+#             cpu: "500m"
+
+# ---
+# # API Gateway Service
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: api-gateway
+#   namespace: xploresg-dev
+#   labels:
+#     app.kubernetes.io/name: api-gateway
+# spec:
+#   type: ClusterIP
+#   ports:
+#   - port: 8080
+#     targetPort: 8080
+#     protocol: TCP
+#     name: http
+#   selector:
+#     app.kubernetes.io/name: api-gateway

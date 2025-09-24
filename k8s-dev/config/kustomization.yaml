@@ -1,0 +1,80 @@
+# Kubernetes Development Configuration (kustomization.yaml)
+# Used for environment-specific configurations
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Namespace for all resources
+namespace: xploresg-dev
+
+# Resources to include
+resources:
+  - ../manifests/namespace.yaml
+  - ../manifests/databases/postgres.yaml
+  - ../manifests/services/user-service.yaml
+  - ../manifests/services/frontend-service.yaml
+  - ../manifests/ingress/ingress.yaml
+
+# Optional resources (uncomment when needed)
+# - ../manifests/databases/mongodb.yaml
+# - ../manifests/databases/redis.yaml
+# - ../manifests/services/api-gateway.yaml
+
+# Common labels for all resources
+commonLabels:
+  app.kubernetes.io/instance: xploresg-dev
+  app.kubernetes.io/managed-by: kustomize
+  environment: development
+
+# Common annotations
+commonAnnotations:
+  managed-by: "XploreSG Development Team"
+
+# Image transformations (override image tags for development)
+images:
+  - name: xploresg/user-service
+    newTag: dev-latest
+  - name: xploresg/frontend
+    newTag: dev-latest
+
+# ConfigMap generator for environment variables
+configMapGenerator:
+  - name: app-config
+    literals:
+      - api-base-url=http://api.xploresg.local
+      - app-name=xploresg
+      - app-version=1.0.0
+      - node-env=development
+
+# Secret generator for sensitive data
+secretGenerator:
+  - name: app-secrets
+    literals:
+      - jwt-secret=your-super-secret-jwt-key-for-development-only
+
+# Resource transformations
+replicas:
+  - name: postgres
+    count: 1
+  - name: user-service
+    count: 1
+  - name: frontend-service
+    count: 1
+
+# Patches for development-specific configurations
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: user-service
+    spec:
+      template:
+        spec:
+          containers:
+          - name: user-service
+            env:
+            - name: LOG_LEVEL
+              value: debug
+            - name: ENABLE_SWAGGER
+              value: "true"

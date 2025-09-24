@@ -1,0 +1,56 @@
+# XploreSG Namespace for Local Development
+# This namespace isolates all XploreSG services in the local minikube cluster
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: xploresg-dev
+  labels:
+    app.kubernetes.io/name: xploresg
+    app.kubernetes.io/component: namespace
+    environment: development
+
+---
+# ConfigMap for shared configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: xploresg-config
+  namespace: xploresg-dev
+  labels:
+    app.kubernetes.io/name: xploresg
+    app.kubernetes.io/component: config
+data:
+  # Database configurations
+  POSTGRES_HOST: "postgres-service"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "xploresg"
+
+  # Redis configurations (for future use)
+  # REDIS_HOST: "redis-service"
+  # REDIS_PORT: "6379"
+
+  # MongoDB configurations (for future use)
+  # MONGODB_HOST: "mongodb-service"
+  # MONGODB_PORT: "27017"
+
+  # Environment
+  NODE_ENV: "development"
+
+---
+# Secret for sensitive data
+apiVersion: v1
+kind: Secret
+metadata:
+  name: xploresg-secrets
+  namespace: xploresg-dev
+  labels:
+    app.kubernetes.io/name: xploresg
+    app.kubernetes.io/component: secret
+type: Opaque
+data:
+  # Base64 encoded values - replace with actual secrets
+  # Example: echo -n 'postgres123' | base64
+  POSTGRES_PASSWORD: cG9zdGdyZXMxMjM= # postgres123
+  # REDIS_PASSWORD: ""  # For future use
+  # JWT_SECRET: ""      # For future use
