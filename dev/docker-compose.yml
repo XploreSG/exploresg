@@ -1,0 +1,290 @@
+version: "3.8"
+
+services:
+  # ===================================================================
+  # ACTIVE SERVICES - Phase 1: Core MVP
+  # ===================================================================
+
+  # Database Services
+  postgres:
+    image: postgres:15-alpine
+    container_name: xploresg-postgres
+    environment:
+      POSTGRES_DB: xploresg
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    networks:
+      - xploresg-network
+
+  # Backend Services - Phase 1
+  user-service:
+    build:
+      context: ../../exploresg-user-service
+      dockerfile: Dockerfile
+    container_name: xploresg-user-service
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/xploresg
+      - PORT=3002
+    ports:
+      - "3002:3002"
+    volumes:
+      - ../../exploresg-user-service:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+    networks:
+      - xploresg-network
+    restart: unless-stopped
+
+  # Frontend Service
+  frontend-service:
+    build:
+      context: ../../exploresg-frontend-service
+      dockerfile: Dockerfile
+    container_name: xploresg-frontend
+    environment:
+      - NODE_ENV=development
+      - REACT_APP_API_URL=http://localhost:3002
+      - PORT=3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../../exploresg-frontend-service:/app
+      - /app/node_modules
+    depends_on:
+      - user-service
+    networks:
+      - xploresg-network
+    restart: unless-stopped
+
+  # ===================================================================
+  # COMMENTED SERVICES - Phase 2+: Gradual Implementation
+  # ===================================================================
+
+  # Uncomment databases as needed for additional services
+  # mongodb:
+  #   image: mongo:7-alpine
+  #   container_name: xploresg-mongodb
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: mongo
+  #     MONGO_INITDB_ROOT_PASSWORD: mongo123
+  #     MONGO_INITDB_DATABASE: xploresg
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - mongodb_data:/data/db
+  #   networks:
+  #     - xploresg-network
+
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: xploresg-redis
+  #   command: redis-server --requirepass redis123
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   networks:
+  #     - xploresg-network
+
+  # Backend Services - Phase 2+
+  # rental-service:
+  #   build:
+  #     context: ../../exploresg-rental-service
+  #     dockerfile: Dockerfile
+  #   container_name: xploresg-rental-service
+  #   environment:
+  #     - NODE_ENV=development
+  #     - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/xploresg
+  #     - REDIS_URL=redis://:redis123@redis:6379
+  #     - PORT=3001
+  #   ports:
+  #     - "3001:3001"
+  #   volumes:
+  #     - ../../exploresg-rental-service:/app
+  #     - /app/node_modules
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #   networks:
+  #     - xploresg-network
+  #   restart: unless-stopped
+
+  # route-service:
+  #   build:
+  #     context: ../../exploresg-route-service
+  #     dockerfile: Dockerfile
+  #   container_name: xploresg-route-service
+  #   environment:
+  #     - NODE_ENV=development
+  #     - MONGODB_URL=mongodb://mongo:mongo123@mongodb:27017/xploresg
+  #     - REDIS_URL=redis://:redis123@redis:6379
+  #     - PORT=3003
+  #   ports:
+  #     - "3003:3003"
+  #   volumes:
+  #     - ../../exploresg-route-service:/app
+  #     - /app/node_modules
+  #   depends_on:
+  #     - mongodb
+  #     - redis
+  #   networks:
+  #     - xploresg-network
+  #   restart: unless-stopped
+
+  # calendar-service:
+  #   build:
+  #     context: ../../exploresg-calendar-service
+  #     dockerfile: Dockerfile
+  #   container_name: xploresg-calendar-service
+  #   environment:
+  #     - PYTHON_ENV=development
+  #     - REDIS_URL=redis://:redis123@redis:6379
+  #     - PORT=3004
+  #     - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+  #     - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+  #   ports:
+  #     - "3004:3004"
+  #   volumes:
+  #     - ../../exploresg-calendar-service:/app
+  #   depends_on:
+  #     - redis
+  #   networks:
+  #     - xploresg-network
+  #   restart: unless-stopped
+
+  # weather-service:
+  #   build:
+  #     context: ../../exploresg-weather-service
+  #     dockerfile: Dockerfile
+  #   container_name: xploresg-weather-service
+  #   environment:
+  #     - GO_ENV=development
+  #     - REDIS_URL=redis://:redis123@redis:6379
+  #     - PORT=3005
+  #     - WEATHER_API_KEY=${WEATHER_API_KEY}
+  #   ports:
+  #     - "3005:3005"
+  #   volumes:
+  #     - ../../exploresg-weather-service:/app
+  #   depends_on:
+  #     - redis
+  #   networks:
+  #     - xploresg-network
+  #   restart: unless-stopped
+
+  # journal-service:
+  #   build:
+  #     context: ../../exploresg-journal-service
+  #     dockerfile: Dockerfile
+  #   container_name: xploresg-journal-service
+  #   environment:
+  #     - NODE_ENV=development
+  #     - MONGODB_URL=mongodb://mongo:mongo123@mongodb:27017/xploresg
+  #     - REDIS_URL=redis://:redis123@redis:6379
+  #     - PORT=3006
+  #   ports:
+  #     - "3006:3006"
+  #   volumes:
+  #     - ../../exploresg-journal-service:/app
+  #     - /app/node_modules
+  #   depends_on:
+  #     - mongodb
+  #     - redis
+  #   networks:
+  #     - xploresg-network
+  #   restart: unless-stopped
+
+  # ai-service:
+  #   build:
+  #     context: ../../exploresg-ai-service
+  #     dockerfile: Dockerfile
+  #   container_name: xploresg-ai-service
+  #   environment:
+  #     - PYTHON_ENV=development
+  #     - REDIS_URL=redis://:redis123@redis:6379
+  #     - PORT=3007
+  #     - GEMINI_API_KEY=${GEMINI_API_KEY}
+  #   ports:
+  #     - "3007:3007"
+  #   volumes:
+  #     - ../../exploresg-ai-service:/app
+  #   depends_on:
+  #     - redis
+  #   networks:
+  #     - xploresg-network
+  #   restart: unless-stopped
+
+  # gamification-service:
+  #   build:
+  #     context: ../../exploresg-gamification-service
+  #     dockerfile: Dockerfile
+  #   container_name: xploresg-gamification-service
+  #   environment:
+  #     - NODE_ENV=development
+  #     - REDIS_URL=redis://:redis123@redis:6379
+  #     - PORT=3008
+  #   ports:
+  #     - "3008:3008"
+  #   volumes:
+  #     - ../../exploresg-gamification-service:/app
+  #     - /app/node_modules
+  #   depends_on:
+  #     - redis
+  #   networks:
+  #     - xploresg-network
+  #   restart: unless-stopped
+
+  # api-gateway:
+  #   build:
+  #     context: ../../exploresg-api-gateway
+  #     dockerfile: Dockerfile
+  #   container_name: xploresg-api-gateway
+  #   environment:
+  #     - NODE_ENV=development
+  #     - RENTAL_SERVICE_URL=http://rental-service:3001
+  #     - USER_SERVICE_URL=http://user-service:3002
+  #     - ROUTE_SERVICE_URL=http://route-service:3003
+  #     - CALENDAR_SERVICE_URL=http://calendar-service:3004
+  #     - WEATHER_SERVICE_URL=http://weather-service:3005
+  #     - JOURNAL_SERVICE_URL=http://journal-service:3006
+  #     - AI_SERVICE_URL=http://ai-service:3007
+  #     - GAMIFICATION_SERVICE_URL=http://gamification-service:3008
+  #     - PORT=3009
+  #   ports:
+  #     - "3009:3009"
+  #   volumes:
+  #     - ../../exploresg-api-gateway:/app
+  #     - /app/node_modules
+  #   depends_on:
+  #     - rental-service
+  #     - user-service
+  #     - route-service
+  #     - calendar-service
+  #     - weather-service
+  #     - journal-service
+  #     - ai-service
+  #     - gamification-service
+  #   networks:
+  #     - xploresg-network
+  #   restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  # Uncomment as you add more services
+  # mongodb_data:
+  #   driver: local
+  # redis_data:
+  #   driver: local
+
+networks:
+  xploresg-network:
+    driver: bridge
+    name: xploresg-network

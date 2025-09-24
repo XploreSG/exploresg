@@ -88,14 +88,28 @@ project-exploresg/
 ### 2. Local Development Setup
 
 ```bash
-# Navigate to project root
-cd ../
+# Navigate to development environment
+cd dev/
 
-# Start all services with Docker Compose
-docker-compose up -d
+# Start all services (databases, backend, frontend)
+./dev-up.sh
 
 # Access the application
-open http://localhost:3000
+# Frontend: http://localhost:3000
+# API Gateway: http://localhost:3009
+```
+
+**What the dev environment includes:**
+
+- 🗄️ **Databases**: PostgreSQL, MongoDB, Redis
+- 🔧 **8 Backend Services**: All microservices running with hot reload
+- 🌐 **Frontend**: React app with live development server
+- ⚙️ **API Gateway**: Service orchestration and routing
+
+**Stop the environment:**
+
+```bash
+./dev-down.sh
 ```
 
 ## 📋 Use Cases
