@@ -8,8 +8,6 @@
 
 **XploreSG** is a smart travel companion app designed for tourists in Singapore. It combines motorcycle and car rental logistics with curated route exploration, calendar integration, weather awareness, journaling, and AI-powered contextual intelligence.
 
----
-
 ## 🎯 Project Overview
 
 This capstone project demonstrates mastery of **Software Engineering Principles** (SWE5001) and **Software Architecture & Design** (SWE5006) through a modular, scalable travel companion application.
@@ -23,8 +21,6 @@ This capstone project demonstrates mastery of **Software Engineering Principles*
 - 📝 **AI-Powered Journaling**: Gemini-powered summaries and suggestions
 - 🏆 **Gamification**: Route completion medals and achievements
 - 📊 **Unified Dashboard**: Integrated view of bookings, weather, and notes
-
----
 
 ## 🏗️ Architecture
 
@@ -52,8 +48,6 @@ This capstone project demonstrates mastery of **Software Engineering Principles*
 - **PostgreSQL**: Booking data, user profiles, fleet management
 - **MongoDB**: Routes, notes, journaling data
 - **Redis**: Caching, sessions, fleet status
-
----
 
 ## 🚀 Quick Start
 
@@ -104,8 +98,6 @@ docker-compose up -d
 open http://localhost:3000
 ```
 
----
-
 ## 📋 Use Cases
 
 | ID  | Use Case         | SWE5001 Focus               | SWE5006 Focus                 |
@@ -119,8 +111,6 @@ open http://localhost:3000
 | UC7 | Journal Ride     | Sentiment analysis, UX      | Domain enrichment             |
 | UC8 | Earn Medals      | Gamification logic          | Event-driven architecture     |
 | UC9 | Dashboard View   | Aggregated UX               | Cross-service orchestration   |
-
----
 
 ## 🛠️ Development Workflow
 
@@ -138,8 +128,6 @@ open http://localhost:3000
 - **API Integration**: Google Calendar, Weather API, Stripe, Gemini
 - **Scalability**: Designed for multilingual UX and guided tours
 
----
-
 ## 📊 Sprint Timeline
 
 | Week       | Sprint Goal                                |
@@ -150,8 +138,6 @@ open http://localhost:3000
 | **Week 4** | Calendar and weather integration           |
 | **Week 5** | Journaling and AI summaries                |
 | **Week 6** | Dashboard, polish, demo preparation        |
-
----
 
 ## 🧪 Testing Strategy
 
@@ -173,8 +159,6 @@ Feature: Motorcycle Booking
 - **E2E Tests**: Complete user journeys
 - **Performance Tests**: Sub-300ms response targets
 
----
-
 ## 🌟 Key Differentiators
 
 ### Technical Excellence
@@ -191,16 +175,12 @@ Feature: Motorcycle Booking
 - **Documentation**: Comprehensive domain models
 - **Extensibility**: Plugin architecture for future features
 
----
-
 ## 📚 Documentation
 
 - **[Architecture Documentation](./docs/architecture.md)** - System design and patterns
 - **[API Documentation](./docs/api.md)** - Service contracts and endpoints
 - **[Development Guide](./docs/development.md)** - Setup and contribution guidelines
 - **[Domain Models](./docs/domain.md)** - DDD aggregates and value objects
-
----
 
 ## 🤝 Contributing
 
@@ -212,13 +192,9 @@ Feature: Motorcycle Booking
 
 See our [Contribution Guidelines](./CONTRIBUTING.md) for detailed workflow.
 
----
-
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
-
----
 
 ## 🎓 Academic Context
 
@@ -226,12 +202,10 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 **Duration**: 6-week Capstone Sprint  
 **Focus**: Modular design, behavioral depth, architectural clarity
 
----
-
 ## 📞 Contact
 
-**Team Lead & Architect**: [Your Name]  
-**Email**: [your.email@example.com]  
+**Team Lead & Architect**: Sreeraj  
+**Email**: sreeraj_ec@hotmail.com  
 **GitHub**: [@XploreSG](https://github.com/XploreSG)
 
 ---
