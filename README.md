@@ -11,7 +11,8 @@
 
 
 ## Project Status 
-Auth Service : [![CI Backend - Build, Test & Security Scan](https://github.com/XploreSG/exploresg-auth-service/actions/workflows/ci-java.yml/badge.svg)](https://github.com/XploreSG/exploresg-auth-service/actions/workflows/ci-java.yml)
+Frontend Service   : [![CI Frontend - Build, Test & Security Scan](https://github.com/XploreSG/exploresg-frontend-service/actions/workflows/ci.yml/badge.svg)](https://github.com/XploreSG/exploresg-frontend-service/actions/workflows/ci.yml)
+Auth Service       : [![CI Backend - Build, Test & Security Scan](https://github.com/XploreSG/exploresg-auth-service/actions/workflows/ci-java.yml/badge.svg)](https://github.com/XploreSG/exploresg-auth-service/actions/workflows/ci-java.yml)
 
 
 ## 🎯 Project Overview
