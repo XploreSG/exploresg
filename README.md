@@ -8,6 +8,12 @@
 
 **XploreSG** is a smart travel companion app designed for tourists in Singapore. It combines motorcycle and car rental logistics with curated route exploration, calendar integration, weather awareness, journaling, and AI-powered contextual intelligence.
 
+
+
+## Project Status 
+Auth Service : [![CI Backend - Build, Test & Security Scan](https://github.com/XploreSG/exploresg-auth-service/actions/workflows/ci-java.yml/badge.svg)](https://github.com/XploreSG/exploresg-auth-service/actions/workflows/ci-java.yml)
+
+
 ## 🎯 Project Overview
 
 This capstone project demonstrates mastery of **Software Engineering Principles** (SWE5001) and **Software Architecture & Design** (SWE5006) through a modular, scalable travel companion application.
