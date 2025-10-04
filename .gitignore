@@ -1,1 +1,37 @@
 aws/*
+# Terraform state files
+*.tfstate
+*.tfstate.*
+
+# Crash logs
+crash.log
+
+# Terraform variable files (if sensitive)
+*.tfvars
+*.tfvars.json
+
+# Terraform plan output
+*.tfplan
+
+# CLI configuration files
+.terraformrc
+terraform.rc
+
+# Local .terraform directory
+.terraform/
+
+# Override files (often used for local testing)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# IDE/editor artifacts
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+
+# MacOS metadata
+.DS_Store
