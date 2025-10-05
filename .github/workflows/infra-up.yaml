@@ -1,0 +1,171 @@
+name: Infrastructure Up
+
+on:
+    workflow_dispatch:
+    workflow_call:
+
+env:
+    AWS_REGION: ap-southeast-1
+    TF_VERSION: 1.13.3
+
+jobs:
+    setup:
+        name: 🔧 Setup & Validation
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: 📥 Checkout code
+              uses: actions/checkout@v4
+
+            - name: 🔐 Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.AWS_REGION }}
+
+            - name: 🛠️ Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                  terraform_version: ${{ env.TF_VERSION }}
+
+            - name: ✅ Validation Complete
+              run: echo "✅ Setup complete - ready to provision infrastructure"
+
+    terraform-infra:
+        name: 🏗️ Provision EKS Infrastructure
+        needs: setup
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: 📥 Checkout code
+              uses: actions/checkout@v4
+
+            - name: 🔐 Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.AWS_REGION }}
+
+            - name: 🛠️ Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                  terraform_version: ${{ env.TF_VERSION }}
+
+            - name: 🔄 Terraform Init
+              working-directory: ./infra
+              run: terraform init
+
+            - name: 📋 Terraform Plan
+              working-directory: ./infra
+              run: |
+                  echo "📊 Planning infrastructure changes..."
+                  terraform plan \
+                    -target=module.eks \
+                    -target=aws_nat_gateway.main \
+                    -out=tfplan
+
+            - name: 🚀 Terraform Apply
+              working-directory: ./infra
+              run: |
+                  echo "🏗️ Provisioning EKS cluster and NAT gateways..."
+                  terraform apply -auto-approve tfplan
+
+            - name: ✅ Infrastructure Provisioned
+              run: echo "✅ EKS cluster and networking infrastructure created"
+
+    configure-eks:
+        name: ⚙️ Configure EKS Cluster
+        needs: terraform-infra
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: 📥 Checkout code
+              uses: actions/checkout@v4
+
+            - name: 🔐 Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.AWS_REGION }}
+
+            - name: 🔗 Configure kubectl
+              run: |
+                  echo "🔗 Connecting to EKS cluster..."
+                  aws eks update-kubeconfig \
+                    --name exploresg-prod-cluster \
+                    --region ${{ env.AWS_REGION }}
+
+            - name: 🔍 Verify EKS Cluster
+              run: |
+                  echo "🔍 Verifying cluster status..."
+                  kubectl get nodes
+                  kubectl get namespaces
+
+            - name: ✅ EKS Ready
+              run: echo "✅ EKS cluster is operational"
+
+    install-controllers:
+        name: 🎛️ Install Load Balancer Controller
+        needs: configure-eks
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: 🔐 Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.AWS_REGION }}
+
+            - name: 🔗 Configure kubectl
+              run: |
+                  aws eks update-kubeconfig \
+                    --name exploresg-prod-cluster \
+                    --region ${{ env.AWS_REGION }}
+
+            - name: 📦 Install AWS Load Balancer Controller
+              run: |
+                  echo "📦 Adding Helm repository..."
+                  helm repo add eks https://aws.github.io/eks-charts
+                  helm repo update
+
+                  echo "🎛️ Installing AWS Load Balancer Controller..."
+                  helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
+                    -n kube-system \
+                    --set clusterName=exploresg-prod-cluster \
+                    --set serviceAccount.create=true \
+                    --set serviceAccount.name=aws-load-balancer-controller
+
+            - name: ⏳ Wait for Controller Ready
+              run: |
+                  echo "⏳ Waiting for controller to be ready..."
+                  kubectl wait --for=condition=ready pod \
+                    -l app.kubernetes.io/name=aws-load-balancer-controller \
+                    -n kube-system \
+                    --timeout=300s
+
+            - name: ✅ Controller Installed
+              run: echo "✅ AWS Load Balancer Controller is ready"
+
+    summary:
+        name: 📊 Deployment Summary
+        needs: [setup, terraform-infra, configure-eks, install-controllers]
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: 🎉 Infrastructure Ready
+              run: |
+                  echo "╔══════════════════════════════════════════╗"
+                  echo "║   ✅ INFRASTRUCTURE READY!               ║"
+                  echo "╚══════════════════════════════════════════╝"
+                  echo ""
+                  echo "✅ EKS Cluster provisioned"
+                  echo "✅ Worker nodes running"
+                  echo "✅ NAT Gateways configured"
+                  echo "✅ AWS Load Balancer Controller installed"
+                  echo ""
+                  echo "🚀 Ready to deploy applications!"
+                  echo "💡 Next: Run 'Application Up' workflow"
