@@ -388,21 +388,80 @@ Connect timeout on endpoint URL: "https://ec2.ap-southeast-1.amazonaws.com/"
 
 ## Next Steps
 
-### Immediate (This Week)
-1. Create RDS Terraform module
-2. Deploy Auth and Fleet databases
-3. Install AWS Load Balancer Controller
+### Updated Implementation Plan
 
-### Short Term (Next Week)
-1. Containerize all services
-2. Deploy to EKS
-3. Configure ingress/ALB
-4. Setup DNS
+**Strategy:** Build modular Terraform for daily spin-up/down to minimize costs
 
-### Medium Term (Next 2 Weeks)
-1. Implement security hardening
-2. Setup monitoring and alerting
-3. Create CI/CD pipeline
+#### Phase A: Enhanced VPC (1-2 hours)
+- [ ] Add DB tier subnets (10.0.200.x, 10.0.201.x)
+- [ ] Create DB subnet group for RDS
+- [ ] Add VPC Endpoints (S3 Gateway, ECR Interface)
+- [ ] Update security groups for 3-tier isolation
+- [ ] Update outputs with DB subnet IDs
+
+#### Phase B: Database Layer (1-2 hours)
+- [ ] Create reusable RDS module
+  - [ ] Support Multi-AZ configuration
+  - [ ] PostgreSQL 16
+  - [ ] Automated backups (7 days)
+  - [ ] Security group (port 5432 from EKS only)
+- [ ] Deploy Auth DB (db.t3.micro Multi-AZ)
+- [ ] Deploy Fleet DB (db.t3.micro Multi-AZ)
+- [ ] Create ElastiCache Redis module
+- [ ] Deploy Redis cluster (cache.t4g.micro)
+
+#### Phase C: Load Balancer & Ingress (1 hour)
+- [ ] Install AWS Load Balancer Controller (Helm)
+- [ ] Create IAM policy and IRSA for controller
+- [ ] Request ACM certificate for domain
+- [ ] Document ALB ingress annotations
+
+#### Phase D: Additional Services (2-3 hours)
+- [ ] CloudFront distribution (optional - can skip to save cost)
+- [ ] WAF with basic OWASP rules (optional)
+- [ ] Route53 hosted zone and records
+- [ ] VPC Flow Logs to S3
+
+#### Phase E: Observability (1 hour)
+- [ ] Enable Container Insights
+- [ ] CloudWatch Log Groups for each service
+- [ ] Basic CloudWatch alarms (CPU, memory, 5xx errors)
+- [ ] SNS topic for alerts
+
+#### Phase F: Application Deployment (2-4 hours)
+- [ ] Create ECR repositories (frontend, auth, fleet)
+- [ ] Build and push Docker images
+- [ ] Create Kubernetes manifests:
+  - [ ] Deployments (with resource limits)
+  - [ ] Services (ClusterIP for internal, LoadBalancer via Ingress for external)
+  - [ ] Ingress with ALB annotations
+  - [ ] ConfigMaps and Secrets
+- [ ] Deploy to cluster
+- [ ] Verify connectivity
+
+#### Phase G: Documentation (1-2 hours)
+- [ ] Architecture diagram (current Mermaid)
+- [ ] Security architecture documentation
+- [ ] Cost breakdown and optimization strategies
+- [ ] DR and failover procedures (theoretical)
+- [ ] Future enhancements (ArgoCD, Service Mesh, etc.)
+
+### Total Estimated Time: 10-15 hours
+### Total Estimated Cost (1 week, 3-4 hrs/day): ~$35-60
+
+### Daily Workflow
+```bash
+# Morning: Spin up demo components
+cd infra/environments/prod
+terraform apply -target=module.eks -target=module.rds -target=module.elasticache
+
+# Demo/Development (3-4 hours)
+
+# Evening: Tear down expensive components
+terraform destroy -target=module.elasticache -target=module.rds -target=module.eks
+
+# Keep running (minimal cost): VPC, subnets, route tables, ECR repos
+```
 
 ---
 
