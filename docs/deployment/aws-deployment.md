@@ -18,21 +18,41 @@
 
 ## Architecture Overview
 
-### High-Level Design
-- **VPC:** 10.0.0.0/16
-- **Availability Zones:** 2 (ap-southeast-1a, ap-southeast-1b)
-- **Tier Architecture:**
-  - Web Tier (Public Subnets) - ALB
-  - App Tier (Private Subnets) - EKS Worker Nodes
-  - DB Tier (Private Subnets) - RDS Instances
+### Technology Stack & Approach
 
-### Services Architecture
-- **Frontend Service:** User-facing web application
-- **Auth Service:** Authentication and authorization
-- **Fleet Service:** Fleet management backend
-- **Databases:** 
-  - Auth DB (RDS)
-  - Fleet DB (RDS)
+| Category | Technology | Approach |
+|----------|-----------|----------|
+| **Infrastructure as Code** | Terraform | All AWS resources defined in .tf files |
+| **Container Orchestration** | Amazon EKS | Kubernetes v1.29 |
+| **Application Deployment** | kubectl + YAML manifests | Manual deployment, no GitOps |
+| **CI/CD** | GitHub Actions (basic) | Build → ECR → Manual kubectl apply |
+| **Configuration Management** | Terraform only | No Helm, CDK, or Pulumi |
+
+### High-Level Design
+
+| Component | Specification | Details |
+|-----------|--------------|---------|
+| **VPC** | 10.0.0.0/16 | Single VPC in ap-southeast-1 |
+| **Availability Zones** | 2 AZs | ap-southeast-1a, ap-southeast-1b |
+| **Web Tier** | Public Subnets | 10.0.100.0/24, 10.0.101.0/24 - ALB, NAT Gateways |
+| **App Tier** | Private Subnets | 10.0.0.0/24, 10.0.1.0/24 - EKS Worker Nodes |
+| **DB Tier** | Private Subnets | 10.0.200.0/24, 10.0.201.0/24 - RDS, ElastiCache |
+
+### Microservices Architecture
+
+| Service | Type | Database | Deployment |
+|---------|------|----------|------------|
+| **Frontend** | React/Next.js | None (static) | EKS pods in both AZs |
+| **Auth Service** | Backend API | Auth PostgreSQL | EKS pods in both AZs |
+| **Fleet Service** | Backend API | Fleet PostgreSQL | EKS pods in both AZs |
+
+### Infrastructure Deployment Strategy
+
+| Phase | Components | Method | Persistence |
+|-------|-----------|--------|-------------|
+| **Base (Always On)** | VPC, Subnets, Routes, ECR, S3 | Terraform apply once | Keep running (~$5/month) |
+| **Demo (Daily)** | EKS, RDS, ElastiCache, NAT, ALB | Terraform apply/destroy daily | Spin up for 3-4 hrs (~$2-3/session) |
+| **Application** | Pods, Services, Ingress | kubectl apply -f manifests/ | Deploy after infra is up |
 
 ---
 
@@ -128,206 +148,98 @@
 ```
 infra/
 ├── modules/
-│   ├── vpc/          ✅ Complete
+│   ├── vpc/          ✅ Complete (needs DB tier update)
 │   ├── eks/          ✅ Complete
 │   ├── rds/          ⏳ To create
-│   └── alb/          ⏳ To create
+│   ├── elasticache/  ⏳ To create
+│   └── monitoring/   ⏳ To create
 └── environments/
-    ├── dev/          ⏳ To setup
+    ├── dev/          ⏳ Future
     └── prod/         ✅ Active
 ```
 
-### Module: VPC ✅
-- [x] VPC resource
-- [x] Internet Gateway
-- [x] Public subnets (2 AZs)
-- [x] Private subnets (2 AZs)
-- [x] NAT Gateways (HA)
-- [x] Route tables
-- [x] Security groups
-- [x] EKS tags on subnets
-- [x] Outputs defined
+### Terraform Modules Status
 
-### Module: EKS ✅
-- [x] Cluster IAM role
-- [x] Node group IAM role
-- [x] EKS cluster
-- [x] Node group
-- [x] Policy attachments
-- [x] Outputs defined
+| Module | Status | Resources | Outputs |
+|--------|--------|-----------|---------|
+| **vpc** | ✅ Partially Complete | VPC, IGW, Public/Private subnets, NAT, Routes, SGs | vpc_id, public_subnet_ids, private_subnet_ids |
+| **vpc** (DB tier) | ⏳ Needs Update | DB subnets, DB subnet group, VPC Endpoints | db_subnet_ids, db_subnet_group_name |
+| **eks** | ✅ Complete | Cluster, Node Group, IAM roles | cluster_id, cluster_endpoint, node_group_id |
+| **rds** | ⏳ To Build | RDS instances, SG, Parameter groups, Backups | auth_db_endpoint, fleet_db_endpoint |
+| **elasticache** | ⏳ To Build | Redis cluster, Subnet group, SG | redis_endpoint, redis_port |
+| **monitoring** | ⏳ To Build | CloudWatch Log Groups, Dashboards, Alarms, SNS | log_group_names, sns_topic_arn |
 
-### Module: RDS ⏳
-- [ ] Create module structure
-- [ ] Subnet group resource
-- [ ] RDS instance resources
-- [ ] Security group for DB
-- [ ] Parameter groups
-- [ ] Backup configuration
-- [ ] Monitoring setup
-- [ ] Outputs defined
+### Terraform Workflow
 
-### Module: ALB ⏳
-- [ ] Create module structure
-- [ ] Security group for ALB
-- [ ] ALB resource
-- [ ] Target groups
-- [ ] Listeners (HTTP/HTTPS)
-- [ ] Outputs defined
-
-### Terraform State Management
-- [x] Local state (current)
-- [ ] Remote state (S3 + DynamoDB) - recommended for prod
+| Task | Command | When to Run | Cost Impact |
+|------|---------|-------------|-------------|
+| **Initialize** | `terraform init` | First time & after adding modules | Free |
+| **Plan Changes** | `terraform plan` | Before every apply | Free |
+| **Deploy Base Infra** | `terraform apply` | Once (VPC, Subnets, ECR) | ~$5/month (keep running) |
+| **Deploy Demo Stack** | `terraform apply -target=module.eks -target=module.rds` | Daily for demos | ~$2-3/session |
+| **Destroy Demo Stack** | `terraform destroy -target=module.elasticache -target=module.rds -target=module.eks` | After each demo | Stops hourly charges |
+| **Validate** | `terraform validate` | Before commit | Free |
+| **Format** | `terraform fmt -recursive` | Before commit | Free |
 
 ---
 
 ## AWS Deployment Checklist
 
-### Phase 1: Foundation (✅ Complete)
-- [x] AWS Account setup
-- [x] IAM credentials configured
-- [x] VPC deployed
-- [x] EKS cluster deployed
-- [x] kubectl access configured
-- [x] Nodes verified as Ready
+### Deployment Phases (Terraform-Based Workflow)
 
-### Phase 2: Database Layer (Next)
-**Priority: HIGH**
+| Phase | Priority | Tasks | Terraform Modules | Time | Cost Impact |
+|-------|----------|-------|-------------------|------|-------------|
+| **Phase 1: Foundation** | ✅ COMPLETE | VPC, EKS cluster, Nodes | vpc, eks | 2-3 hrs | ~$100/month base |
+| **Phase 2: Enhanced VPC** | 🔄 NEXT | DB subnets, VPC Endpoints, SGs | vpc (update) | 1-2 hrs | +$10/month |
+| **Phase 3: Database Layer** | ⏳ TODO | RDS Multi-AZ, ElastiCache | rds, elasticache | 2-3 hrs | +$80/month |
+| **Phase 4: Load Balancer** | ⏳ TODO | ALB Controller, IRSA, ACM cert | kubernetes | 1 hr | +$20/month |
+| **Phase 5: Observability** | ⏳ TODO | CloudWatch, SNS, Dashboards | monitoring | 1 hr | +$10/month |
+| **Phase 6: Application** | ⏳ TODO | ECR, Dockerfiles, K8s manifests | N/A (manual) | 3-4 hrs | +$5/month |
+| **Phase 7: Edge (Optional)** | ⏳ TODO | CloudFront, WAF | cdn, waf | 1-2 hrs | +$50/month |
 
-#### Setup Tasks
-- [ ] Create RDS Terraform module
-- [ ] Define database subnet groups
-- [ ] Create Auth DB instance
-  - [ ] Engine: PostgreSQL/MySQL
-  - [ ] Instance class: db.t3.micro (start small)
-  - [ ] Multi-AZ: Yes (for HA)
-  - [ ] Backup retention: 7 days
-- [ ] Create Fleet DB instance
-  - [ ] Same configuration as Auth DB
-- [ ] Configure security groups
-  - [ ] Allow port 5432/3306 from EKS nodes
-  - [ ] No public access
-- [ ] Create database secrets in Kubernetes
-- [ ] Test connectivity from pods
+### Phase 2: Enhanced VPC (Next Steps)
 
-**Estimated Time:** 2-3 hours  
-**Dependencies:** VPC, Private subnets
+| Task | Method | Files to Update | Verification |
+|------|--------|-----------------|--------------|
+| Add DB subnets | Update `modules/vpc/main.tf` | Add `aws_subnet.database` resource | `terraform plan` shows 2 new subnets |
+| Create DB subnet group | Add to `modules/vpc/main.tf` | Add `aws_db_subnet_group` | Output: `db_subnet_group_name` |
+| Add VPC Endpoints | Add to `modules/vpc/main.tf` | S3 gateway, ECR interface endpoints | `aws ec2 describe-vpc-endpoints` |
+| Update security groups | Modify `modules/vpc/main.tf` | Add SG for databases, cache | `terraform plan` shows new SGs |
+| Update outputs | Modify `modules/vpc/outputs.tf` | Export DB subnet IDs | Check with `terraform output` |
 
-### Phase 3: Load Balancer Setup (After Phase 2)
-**Priority: HIGH**
+### Phase 3: Database Layer
 
-#### Setup Tasks
-- [ ] Install AWS Load Balancer Controller
-  ```bash
-  helm repo add eks https://aws.github.io/eks-charts
-  helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
-    -n kube-system \
-    --set clusterName=exploresg-prod-cluster
-  ```
-- [ ] Create IAM policy for LB controller
-- [ ] Configure IRSA for LB controller
-- [ ] Request ACM certificate
-- [ ] Validate certificate
-- [ ] Create Terraform module for ALB (optional)
+| Component | Terraform Resource | Configuration | Multi-AZ | Backup |
+|-----------|-------------------|---------------|----------|--------|
+| **Auth DB** | `aws_db_instance.auth` | PostgreSQL 16, db.t3.micro | ✅ Yes | 7 days |
+| **Fleet DB** | `aws_db_instance.fleet` | PostgreSQL 16, db.t3.micro | ✅ Yes | 7 days |
+| **Redis Cache** | `aws_elasticache_replication_group` | Redis 7.x, cache.t4g.micro | ✅ Yes | Snapshots |
+| **DB Security Group** | `aws_security_group.database` | Port 5432 from EKS SG only | N/A | N/A |
+| **Cache Security Group** | `aws_security_group.cache` | Port 6379 from EKS SG only | N/A | N/A |
 
-**Estimated Time:** 1-2 hours  
-**Dependencies:** EKS cluster
+### Phase 4: Load Balancer Setup
 
-### Phase 4: Container Registry (After Phase 3)
-**Priority: MEDIUM**
+| Task | Method | Command/Config | Verification |
+|------|--------|----------------|--------------|
+| Install LB Controller | Helm chart | `helm install aws-load-balancer-controller` | `kubectl get pods -n kube-system` |
+| Create IRSA | Terraform + kubectl | IAM policy + service account | `kubectl describe sa -n kube-system` |
+| Request ACM cert | Terraform | `aws_acm_certificate` | Check in AWS Console |
+| Create Ingress | K8s manifest | `ingress.yaml` with ALB annotations | `kubectl get ingress` |
 
-#### Setup Tasks
-- [ ] Create ECR repositories
-  - [ ] exploresg/frontend
-  - [ ] exploresg/auth-service
-  - [ ] exploresg/fleet-service
-- [ ] Configure ECR lifecycle policies
-- [ ] Setup ECR pull permissions
-- [ ] Document image tagging strategy
+### Phase 6: Application Deployment (kubectl Workflow)
 
-**Estimated Time:** 30 minutes  
-**Dependencies:** None
-
-### Phase 5: Application Deployment (After Phase 4)
-**Priority: HIGH**
-
-#### Containerization
-- [ ] Dockerfile for frontend service
-- [ ] Dockerfile for auth service
-- [ ] Dockerfile for fleet service
-- [ ] Build and test images locally
-- [ ] Push to ECR
-
-#### Kubernetes Manifests
-- [ ] Create namespace: `exploresg-prod`
-- [ ] Frontend deployment & service
-- [ ] Auth service deployment & service
-- [ ] Fleet service deployment & service
-- [ ] ConfigMaps for configuration
-- [ ] Secrets for sensitive data
-- [ ] Ingress resource with ALB annotations
-- [ ] HPA (Horizontal Pod Autoscaler) - optional
-
-**Estimated Time:** 4-6 hours  
-**Dependencies:** ECR, RDS, ALB Controller
-
-### Phase 6: DNS & Domain (After Phase 5)
-**Priority: MEDIUM**
-
-#### Setup Tasks
-- [ ] Register domain (if needed)
-- [ ] Create Route53 hosted zone
-- [ ] Point domain to ALB
-- [ ] Configure External DNS (optional)
-- [ ] Test DNS resolution
-
-**Estimated Time:** 1 hour  
-**Dependencies:** ALB deployed
-
-### Phase 7: Security Hardening (Ongoing)
-**Priority: HIGH**
-
-#### Tasks
-- [ ] Review security groups (least privilege)
-- [ ] Implement network policies
-- [ ] Setup pod security standards
-- [ ] Configure secrets encryption
-- [ ] Enable audit logging
-- [ ] Implement IRSA for all services
-- [ ] Setup WAF rules (optional)
-
-**Estimated Time:** 2-3 hours  
-**Dependencies:** All services deployed
-
-### Phase 8: Observability (After Phase 7)
-**Priority: MEDIUM**
-
-#### Tasks
-- [ ] Enable Container Insights
-- [ ] Configure log aggregation
-- [ ] Setup CloudWatch dashboards
-- [ ] Configure alerts
-  - [ ] Node CPU/Memory
-  - [ ] Pod restart count
-  - [ ] Database connections
-  - [ ] ALB 5xx errors
-- [ ] Setup distributed tracing (optional)
-
-**Estimated Time:** 2-3 hours  
-**Dependencies:** Applications running
-
-### Phase 9: CI/CD Pipeline (Final)
-**Priority: MEDIUM**
-
-#### Tasks
-- [ ] Choose CI/CD platform
-- [ ] Configure pipeline for each service
-- [ ] Implement automated testing
-- [ ] Setup deployment automation
-- [ ] Configure rollback procedures
-- [ ] Implement approval gates for prod
-
-**Estimated Time:** 4-8 hours  
-**Dependencies:** All infrastructure complete
+| Step | Tool | Command | Output |
+|------|------|---------|--------|
+| **1. Build Images** | Docker | `docker build -t frontend:v1 .` | Local image |
+| **2. Tag for ECR** | Docker | `docker tag frontend:v1 <account>.dkr.ecr.<region>.amazonaws.com/frontend:v1` | Tagged image |
+| **3. Push to ECR** | Docker | `docker push <account>.dkr.ecr.<region>.amazonaws.com/frontend:v1` | Image in ECR |
+| **4. Create Namespace** | kubectl | `kubectl create namespace exploresg-prod` | Namespace created |
+| **5. Apply ConfigMaps** | kubectl | `kubectl apply -f configmap.yaml` | ConfigMap created |
+| **6. Apply Secrets** | kubectl | `kubectl apply -f secrets.yaml` | Secret created |
+| **7. Deploy Services** | kubectl | `kubectl apply -f deployment.yaml` | Pods running |
+| **8. Create Services** | kubectl | `kubectl apply -f service.yaml` | Services created |
+| **9. Create Ingress** | kubectl | `kubectl apply -f ingress.yaml` | ALB provisioned |
+| **10. Verify** | kubectl | `kubectl get all -n exploresg-prod` | All resources up |
 
 ---
 
@@ -388,79 +300,55 @@ Connect timeout on endpoint URL: "https://ec2.ap-southeast-1.amazonaws.com/"
 
 ## Next Steps
 
-### Updated Implementation Plan
+## Implementation Timeline
 
-**Strategy:** Build modular Terraform for daily spin-up/down to minimize costs
+| Phase | Date Started | Date Completed | Status | Duration | Key Deliverables | Notes |
+|-------|--------------|----------------|--------|----------|------------------|-------|
+| **Phase 1: Foundation** | Oct 4, 2025 | Oct 4, 2025 | ✅ Complete | 3 hours | VPC (2-tier), EKS cluster, 2 worker nodes | Resolved node join issue with NAT Gateway |
+| **Phase 2: Enhanced VPC** | Oct 5, 2025 | ___ | 🔄 In Progress | 1-2 hours | DB tier subnets, VPC Endpoints, 3-tier SGs | Adding DB subnets (10.0.200.x, 10.0.201.x) |
+| **Phase 3: Database Layer** | ___ | ___ | ⏳ Pending | 2-3 hours | RDS Multi-AZ (auth, fleet), ElastiCache Redis | Reusable modules for future services |
+| **Phase 4: Load Balancer** | ___ | ___ | ⏳ Pending | 1 hour | AWS LB Controller, IRSA, ACM cert | Helm-based controller installation |
+| **Phase 5: Observability** | ___ | ___ | ⏳ Pending | 1 hour | Container Insights, CloudWatch, SNS alerts | Basic monitoring for demo |
+| **Phase 6: Application** | ___ | ___ | ⏳ Pending | 3-4 hours | ECR repos, Docker images, K8s manifests | kubectl-based deployment |
+| **Phase 7: Edge Services** | ___ | ___ | ⏳ Optional | 1-2 hours | CloudFront, WAF, Route53 | Skip if budget/time constrained |
+| **Phase 8: Documentation** | ___ | ___ | ⏳ Pending | 1-2 hours | Architecture docs, cost analysis, DR plan | For capstone presentation |
 
-#### Phase A: Enhanced VPC (1-2 hours)
-- [ ] Add DB tier subnets (10.0.200.x, 10.0.201.x)
-- [ ] Create DB subnet group for RDS
-- [ ] Add VPC Endpoints (S3 Gateway, ECR Interface)
-- [ ] Update security groups for 3-tier isolation
-- [ ] Update outputs with DB subnet IDs
+**Total Estimated Time:** 10-15 hours  
+**Total Estimated Cost:** ~$35-60 (1 week, 3-4 hrs/day)  
+**Target Completion:** Oct 12, 2025
 
-#### Phase B: Database Layer (1-2 hours)
-- [ ] Create reusable RDS module
-  - [ ] Support Multi-AZ configuration
-  - [ ] PostgreSQL 16
-  - [ ] Automated backups (7 days)
-  - [ ] Security group (port 5432 from EKS only)
-- [ ] Deploy Auth DB (db.t3.micro Multi-AZ)
-- [ ] Deploy Fleet DB (db.t3.micro Multi-AZ)
-- [ ] Create ElastiCache Redis module
-- [ ] Deploy Redis cluster (cache.t4g.micro)
+### Phase Transition Checklist
 
-#### Phase C: Load Balancer & Ingress (1 hour)
-- [ ] Install AWS Load Balancer Controller (Helm)
-- [ ] Create IAM policy and IRSA for controller
-- [ ] Request ACM certificate for domain
-- [ ] Document ALB ingress annotations
+| From Phase | To Phase | Prerequisites | Validation Command |
+|------------|----------|---------------|-------------------|
+| Phase 1 → 2 | Foundation → Enhanced VPC | VPC and EKS operational | `terraform state list \| grep vpc` |
+| Phase 2 → 3 | Enhanced VPC → Database | DB subnets created | `aws ec2 describe-subnets --filters "Name=tag:Tier,Values=database"` |
+| Phase 3 → 4 | Database → Load Balancer | RDS endpoints available | `aws rds describe-db-instances` |
+| Phase 4 → 5 | Load Balancer → Observability | ALB provisioned | `kubectl get ingress` |
+| Phase 5 → 6 | Observability → Application | Monitoring configured | `aws cloudwatch list-dashboards` |
+| Phase 6 → 7 | Application → Edge | Pods running | `kubectl get pods -n exploresg-prod` |
+| Phase 7 → 8 | Edge → Documentation | All services accessible | Test application endpoint |
 
-#### Phase D: Additional Services (2-3 hours)
-- [ ] CloudFront distribution (optional - can skip to save cost)
-- [ ] WAF with basic OWASP rules (optional)
-- [ ] Route53 hosted zone and records
-- [ ] VPC Flow Logs to S3
+### Daily Operations Log
 
-#### Phase E: Observability (1 hour)
-- [ ] Enable Container Insights
-- [ ] CloudWatch Log Groups for each service
-- [ ] Basic CloudWatch alarms (CPU, memory, 5xx errors)
-- [ ] SNS topic for alerts
+| Date | Action | Duration | Cost | Notes |
+|------|--------|----------|------|-------|
+| Oct 4, 2025 | Initial VPC + EKS setup | 3 hours | ~$8 | Fixed node join issue |
+| Oct 5, 2025 | VPC enhancement work | TBD | TBD | Adding DB tier |
+| ___ | ___ | ___ | ___ | ___ |
+| ___ | ___ | ___ | ___ | ___ |
 
-#### Phase F: Application Deployment (2-4 hours)
-- [ ] Create ECR repositories (frontend, auth, fleet)
-- [ ] Build and push Docker images
-- [ ] Create Kubernetes manifests:
-  - [ ] Deployments (with resource limits)
-  - [ ] Services (ClusterIP for internal, LoadBalancer via Ingress for external)
-  - [ ] Ingress with ALB annotations
-  - [ ] ConfigMaps and Secrets
-- [ ] Deploy to cluster
-- [ ] Verify connectivity
-
-#### Phase G: Documentation (1-2 hours)
-- [ ] Architecture diagram (current Mermaid)
-- [ ] Security architecture documentation
-- [ ] Cost breakdown and optimization strategies
-- [ ] DR and failover procedures (theoretical)
-- [ ] Future enhancements (ArgoCD, Service Mesh, etc.)
-
-### Total Estimated Time: 10-15 hours
-### Total Estimated Cost (1 week, 3-4 hrs/day): ~$35-60
-
-### Daily Workflow
+**Daily Workflow Template:**
 ```bash
-# Morning: Spin up demo components
-cd infra/environments/prod
+# Morning: Spin up demo stack
 terraform apply -target=module.eks -target=module.rds -target=module.elasticache
 
-# Demo/Development (3-4 hours)
+# Work/Demo: 3-4 hours
 
-# Evening: Tear down expensive components
+# Evening: Tear down
 terraform destroy -target=module.elasticache -target=module.rds -target=module.eks
 
-# Keep running (minimal cost): VPC, subnets, route tables, ECR repos
+# Total daily cost: ~$2-3 for 4-hour session
 ```
 
 ---
